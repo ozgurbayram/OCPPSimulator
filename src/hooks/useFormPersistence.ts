@@ -33,11 +33,8 @@ export const useFormPersistence = (
         const data: PersistenceData = JSON.parse(saved);
         
         if (data.config) {
-          Object.keys(data.config).forEach((key) => {
-            if (key in data.config && data.config[key as keyof ConnectionConfig] !== undefined) {
-              form.setValue(key as keyof ConnectionConfig, data.config[key as keyof ConnectionConfig] as any);
-            }
-          });
+          // Set all form values at once to avoid multiple re-renders
+          form.reset(data.config as ConnectionConfig);
         }
         
         return {
@@ -51,12 +48,22 @@ export const useFormPersistence = (
     return { battery: {}, frames: [] };
   }, [form]);
 
+  // Watch for form changes and save them with debounce
+  const watchedValues = form.watch();
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      saveToStorage();
+    }, 500); // Debounce saves by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedValues, saveToStorage]);
+
+  const saveImmediately = useCallback(() => {
     saveToStorage();
   }, [saveToStorage]);
 
   return {
-    saveToStorage,
+    saveToStorage: saveImmediately,
     loadFromStorage
   };
 };
