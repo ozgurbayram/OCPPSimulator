@@ -1,11 +1,5 @@
-import OCPPSimulator from './components/OCPPSimulator';
-
 const App = () => {
-  return (
-    <>
-      <OCPPSimulator />
-    </>
-  );
+  return <div>App</div>;
 };
 
 export default App;
