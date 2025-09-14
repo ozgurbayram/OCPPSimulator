@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useDispatch, useSelector } from 'react-redux'
-import type { RootState } from '../../app/store'
+import type { RootState } from '../../store/store'
 import { setStatus, type ChargePoint, type ConnectionConfig } from './ocppSlice'
 import { callAction, connectWs, disconnectWs } from './wsManager'
 import { loadFrames } from './storage'

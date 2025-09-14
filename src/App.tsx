@@ -7,10 +7,7 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path='/' element={<Dashboard />} />
-        <Route
-          path='/charge-point-connection'
-          element={<ChargePointConnection />}
-        />
+        <Route path='/cp/:id' element={<ChargePointConnection />} />
       </Routes>
     </BrowserRouter>
   );

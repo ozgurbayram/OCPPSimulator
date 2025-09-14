@@ -11,8 +11,8 @@ export const useBatteryState = () => {
     energyWh: 0
   });
 
-  const powerTimer = useRef<number | null>(null);
-  const txTimer = useRef<number | null>(null);
+  const powerTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const txTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const beginCharge = useCallback((onMeterValues: () => void) => {
     const targetKw = 7.4;
