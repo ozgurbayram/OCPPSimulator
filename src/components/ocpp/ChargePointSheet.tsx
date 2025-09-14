@@ -6,10 +6,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { addChargePoint } from '@/features/ocpp/ocppSlice';
+import { addChargePoint, setStatus } from '@/features/ocpp/ocppSlice';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { connectWs } from '@/features/ocpp/wsManager';
 
 interface Props {
   open: boolean;
@@ -33,6 +35,16 @@ export function ChargePointSheet({ open, onOpenChange }: Props) {
   });
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  function buildUrl(csmsUrl: string, cpId: string) {
+    let base = csmsUrl.trim();
+    if (!base) throw new Error('URL required');
+    if (!base.endsWith('/')) base += '/';
+    const cp = encodeURIComponent(cpId.trim() || 'SIM');
+    const url = new URL(base + cp);
+    return url.toString();
+  }
 
   const onSubmit = form.handleSubmit((values) => {
     const action: any = dispatch(
@@ -46,6 +58,21 @@ export function ChargePointSheet({ open, onOpenChange }: Props) {
       })
     );
     const id: string = action.payload.id;
+    // Auto-connect immediately after creation (minimal UX)
+    try {
+      const url = buildUrl(values.csmsUrl.trim(), values.cpId.trim());
+      dispatch(setStatus({ id, status: 'connecting' }));
+      void connectWs(
+        id,
+        url,
+        'ocpp1.6',
+        qc,
+        () => dispatch(setStatus({ id, status: 'connected' })),
+        () => dispatch(setStatus({ id, status: 'disconnected' }))
+      );
+    } catch {
+      // ignore invalid URL here
+    }
     onOpenChange(false);
     navigate(`/cp/${id}`);
   });
