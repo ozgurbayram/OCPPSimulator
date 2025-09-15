@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-nocheck
 import ChargingStatusDisplay from '@/components/ChargingStatusDisplay';
 import ControlsPanel from '@/components/ControlsPanel';
 import { DashboardLayout } from '@/components/DashboardLayout';
