@@ -10,12 +10,14 @@ import {
   uuidv4,
 } from '../../utils/ocpp';
 import { setTransactionId } from './ocppSlice';
+import { ensureMeterForCp, getMeterForCp } from '@/services/meterModel';
 import { saveFrames, type Frame as PersistedFrame } from './storage';
 
 type Pending = {
   resolve: (v: any) => void;
   reject: (e: any) => void;
   action: string;
+  payload: any;
 };
 
 interface Client {
@@ -24,6 +26,7 @@ interface Client {
 }
 
 const clients = new Map<string, Client>();
+const meterIntervals = new Map<string, any>();
 
 export function connectWs(
   id: string,
@@ -51,6 +54,27 @@ export function connectWs(
           id: protocol,
           raw: ['OPEN', url, protocol],
         });
+        // Ensure a meter instance exists and start ticking
+        try {
+          const meter = ensureMeterForCp(
+            id,
+            {
+              nowISO: () => new Date().toISOString(),
+              sendCall: (action: string, payload: any) => callAction(id, action, payload),
+              getActiveConnectorId: () => store.getState().ocpp.items[id]?.runtime?.connectorId,
+              getTransactionId: () => store.getState().ocpp.items[id]?.runtime?.transactionId,
+              getMeterValuesMeasurands: () => undefined,
+              getSoCMode: () => 'ev',
+            } as any
+          )
+          // Refresh interval if present
+          const prev = meterIntervals.get(id)
+          if (prev) clearInterval(prev)
+          const handle = setInterval(() => {
+            meter.tick().catch(() => {})
+          }, 5000)
+          meterIntervals.set(id, handle)
+        } catch {}
         resolve();
       };
 
@@ -66,6 +90,11 @@ export function connectWs(
         });
         clients.delete(id);
         clientsQuery.delete(id);
+        const h = meterIntervals.get(id)
+        if (h) {
+          clearInterval(h)
+          meterIntervals.delete(id)
+        }
       };
 
       ws.onerror = (e) => {
@@ -97,6 +126,23 @@ export function connectWs(
             const p = client.pending.get(meta.id);
             if (p) {
               client.pending.delete(meta.id);
+              // Hook Start/Stop transaction for meter lifecycle
+              try {
+                if (p.action === 'StartTransaction') {
+                  const body = arr[2] || {};
+                  const txid =
+                    typeof body?.transactionId === 'number'
+                      ? body.transactionId
+                      : Math.floor(Math.random() * 100000);
+                  // Update app runtime (idempotent)
+                  try { store.dispatch(setTransactionId({ id, transactionId: txid })); } catch {}
+                  const conn = Number(p.payload?.connectorId) || (store.getState().ocpp.items[id]?.runtime?.connectorId ?? 1)
+                  const meterStart = Number(p.payload?.meterStart) || 0
+                  getMeterForCp(id)?.start(txid, conn, meterStart)
+                } else if (p.action === 'StopTransaction') {
+                  getMeterForCp(id)?.stop()
+                }
+              } catch {}
               p.resolve(arr[2]);
             }
           } else if (meta.type === 'CALLERROR') {
@@ -116,6 +162,15 @@ export function connectWs(
                   store.getState().ocpp.items[id]?.runtime?.connectorId,
                 getTransactionId: () =>
                   store.getState().ocpp.items[id]?.runtime?.transactionId,
+                getBattery: () => {
+                  try {
+                    const st = getMeterForCp(id)?.getState()
+                    if (!st) return undefined
+                    return { soc: st.socPct, currentA: st.currentA, energyWh: st.energyWh }
+                  } catch {
+                    return undefined
+                  }
+                },
                 // Hooks for remote start/stop flows
                 startLocalFlow: async ({ connectorId, idTag }) => {
                   const state = store.getState();
@@ -246,7 +301,7 @@ export function callAction(
     raw: arr,
   });
   return new Promise((resolve, reject) => {
-    c.pending.set(mid, { resolve, reject, action });
+    c.pending.set(mid, { resolve, reject, action, payload });
   });
 }
 
