@@ -203,10 +203,18 @@ export function connectWs(
                   const cp = state.ocpp.items[id];
                   const conn = cp?.runtime?.connectorId ?? 1;
                   const tag = cp?.runtime?.idTag ?? 'DEMO1234';
+                  // Try to take a final tick and read current energy register
+                  let meterStop = 0
+                  try {
+                    const m = getMeterForCp(id)
+                    await m?.tick()
+                    const st = m?.getState()
+                    meterStop = Math.floor(Math.max(0, Number(st?.energyWh || 0)))
+                  } catch {}
                   await callAction(id, 'StopTransaction', {
                     transactionId,
                     idTag: tag,
-                    meterStop: Math.floor(1500 + Math.random() * 500),
+                    meterStop,
                     timestamp: new Date().toISOString(),
                     reason: 'Remote',
                   });

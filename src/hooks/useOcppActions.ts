@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import type { errorCodes, statuses } from '../constants/ocpp.constants';
 import { useOcppConnection } from '../features/ocpp/hooks';
+import { getMeterForCp } from '@/services/meterModel';
 import { setTransactionId, type ChargePoint } from '../features/ocpp/ocppSlice';
 
 const useOcppActions = (cp: ChargePoint) => {
@@ -92,12 +93,20 @@ const useOcppActions = (cp: ChargePoint) => {
 
   const stopTx = async () => {
     const tx = cp.runtime?.transactionId || 0;
+    // Take a final meter tick and use current energy register
+    let meterStop = 0;
+    try {
+      const m = getMeterForCp(cp.id);
+      await m?.tick();
+      const st = m?.getState();
+      meterStop = Math.floor(Math.max(0, Number(st?.energyWh || 0)));
+    } catch {}
     await call.mutateAsync({
       action: 'StopTransaction',
       payload: {
         transactionId: tx,
         idTag: cp.runtime?.idTag || 'DEMO1234',
-        meterStop: Math.floor(1500 + Math.random() * 500),
+        meterStop,
         timestamp: new Date().toISOString(),
         reason: 'Local',
       },

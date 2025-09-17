@@ -40,11 +40,6 @@ export function ChargingStatusDisplay({
   const powerValue = find('Power.Active.Import');
   const voltageValue = find('Voltage');
 
-  console.log('energyValue', energyValue);
-  console.log('currentValue', currentValue);
-  console.log('powerValue', powerValue);
-  console.log('voltageValue', voltageValue);
-
   const energyWh = energyValue ? Number.parseFloat(energyValue.value) : 0;
   const currentA = currentValue ? Number.parseFloat(currentValue.value) : 0;
   const powerKW = powerValue
