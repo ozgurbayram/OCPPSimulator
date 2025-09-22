@@ -2,23 +2,37 @@
 import ChargingStatusDisplay from '@/components/ChargingStatusDisplay';
 import ControlsPanel from '@/components/ControlsPanel';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { ChargePointConfigSheet } from '@/components/ocpp/ChargePointConfigSheet';
 import { NetworkTraffic } from '@/components/ocpp/NetworkTraffic';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useFrames, useOcppConnection } from '@/features/ocpp/hooks';
-import { setPaused } from '@/features/ocpp/ocppSlice';
+import { removeChargePoint, setPaused } from '@/features/ocpp/ocppSlice';
+import { disconnectWs } from '@/features/ocpp/wsManager';
 import { saveFrames } from '@/features/ocpp/storage';
 import { useChargingStatus } from '@/hooks/useChargingStatus';
 import type { RootState } from '@/store/store';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function ChargePointConnection() {
   const { id } = useParams<{ id: string }>();
   const cp = useSelector((s: RootState) => (id ? s.ocpp.items[id] : undefined));
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [configOpen, setConfigOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { connect, disconnect } = useOcppConnection(cp);
 
@@ -75,6 +89,17 @@ export default function ChargePointConnection() {
     queryClient.setQueryData(['frames', cp.id], []);
   };
 
+  const onDelete = () => {
+    setDeleteOpen(false);
+    try {
+      disconnectWs(cp.id);
+    } catch {}
+    saveFrames(cp.id, []);
+    queryClient.setQueryData(['frames', cp.id], []);
+    dispatch(removeChargePoint(cp.id));
+    navigate('/');
+  };
+
   return (
     <DashboardLayout>
       <div className='grid gap-4 p-4'>
@@ -99,7 +124,17 @@ export default function ChargePointConnection() {
               <span className='capitalize'>{cp.status}</span>
             </div>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button size='sm' variant='outline' onClick={() => setConfigOpen(true)}>
+              Edit
+            </Button>
+            <Button
+              size='sm'
+              variant='destructive'
+              onClick={() => setDeleteOpen(true)}
+            >
+              Delete
+            </Button>
             <Button
               size='sm'
               variant='outline'
@@ -138,6 +173,32 @@ export default function ChargePointConnection() {
           onClear={onClear}
         />
       </div>
+      <ChargePointConfigSheet
+        chargePoint={cp}
+        open={configOpen}
+        onOpenChange={(next) => setConfigOpen(next)}
+      />
+      <Dialog open={deleteOpen} onOpenChange={(next) => setDeleteOpen(next)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete connection?</DialogTitle>
+            <DialogDescription>
+              This will remove "{cp.label}" and disconnect the simulated charge
+              point.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type='button' variant='outline'>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type='button' variant='destructive' onClick={onDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
