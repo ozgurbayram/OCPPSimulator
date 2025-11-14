@@ -155,15 +155,15 @@ export default function ChargePointConnection() {
               size='sm'
               variant='outline'
               onClick={() => connect.mutate({})}
-              disabled={cp.status !== 'disconnected' || connect.isPending}
+              disabled={(cp.status !== 'disconnected') || connect.isPending}
             >
-              Connect
+              {connect.isPending || cp.status === 'connecting' ? 'Connecting...' : 'Connect'}
             </Button>
             <Button
               size='sm'
               variant='ghost'
               onClick={() => disconnect.mutate()}
-              disabled={cp.status === 'disconnected'}
+              disabled={cp.status === 'disconnected' || disconnect.isPending}
             >
               Disconnect
             </Button>

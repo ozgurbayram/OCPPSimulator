@@ -52,7 +52,7 @@
   --primary: var(--primary-color, oklch(0.922 0 0));
   --primary-foreground: oklch(0.205 0 0);
   --secondary: var(--secondary-color, oklch(0.269 0 0));
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);

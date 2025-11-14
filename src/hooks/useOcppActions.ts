@@ -75,7 +75,6 @@ const useOcppActions = (cp: ChargePoint) => {
 
   const stopTx = async () => {
     const tx = cp.runtime?.transactionId || 0;
-    // Take a final meter tick and use current energy register
     let meterStop = 0;
     try {
       const m = getMeterForCp(cp.id);
@@ -98,6 +97,17 @@ const useOcppActions = (cp: ChargePoint) => {
       action: 'StatusNotification',
       payload: {
         connectorId: cp.runtime?.connectorId || 1,
+        status: 'Finishing',
+        errorCode: 'NoError',
+      },
+    });
+  };
+
+  const unlockCable = async () => {
+    await call.mutateAsync({
+      action: 'StatusNotification',
+      payload: {
+        connectorId: cp.runtime?.connectorId || 1,
         status: 'Available',
         errorCode: 'NoError',
       },
@@ -112,6 +122,7 @@ const useOcppActions = (cp: ChargePoint) => {
     startTx,
     meterValues,
     stopTx,
+    unlockCable,
     connected,
     st,
     setSt,

@@ -123,7 +123,6 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
 
   const onStopTx = async () => {
     const tx = cp.runtime?.transactionId || 0;
-    // Use meter model's current energy register
     let meterStop = 0;
     try {
       const m = getMeterForCp(cp.id);
@@ -146,11 +145,22 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
       action: 'StatusNotification',
       payload: {
         connectorId,
-        status: 'Available',
+        status: 'Finishing',
         errorCode: 'NoError',
       },
     });
     endCharge();
+  };
+
+  const onUnlockCable = async () => {
+    await call.mutateAsync({
+      action: 'StatusNotification',
+      payload: {
+        connectorId,
+        status: 'Available',
+        errorCode: 'NoError',
+      },
+    });
   };
 
   return (
@@ -222,9 +232,17 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
             size='sm'
             variant='destructive'
             onClick={onStopTx}
-            disabled={!connected}
+            disabled={!connected || !cp.runtime?.transactionId}
           >
             StopTx
+          </Button>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={onUnlockCable}
+            disabled={!connected}
+          >
+            Unlock Cable
           </Button>
         </div>
       </CardContent>

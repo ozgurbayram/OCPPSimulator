@@ -5,14 +5,19 @@ import { ensureMeterForCp, getMeterForCp } from '@/services/meterModel';
 import { store } from '@/store/store';
 import { QueryClient } from '@tanstack/react-query';
 import {
-    createOCPPCall,
-    createOCPPError,
-    createOCPPResult,
-    parseOCPPFrame,
-    uuidv4,
+  createOCPPCall,
+  createOCPPError,
+  createOCPPResult,
+  parseOCPPFrame,
+  uuidv4,
 } from '../../utils/ocpp';
 import { setTransactionId } from './ocppSlice';
-import { loadDeviceSettings, loadOcppConfiguration, saveFrames, type Frame as PersistedFrame } from './storage';
+import {
+  loadDeviceSettings,
+  loadOcppConfiguration,
+  saveFrames,
+  type Frame as PersistedFrame,
+} from './storage';
 
 type Pending = {
   resolve: (v: any) => void;
@@ -28,6 +33,8 @@ interface Client {
 
 const clients = new Map<string, Client>();
 const meterIntervals = new Map<string, any>();
+const heartbeatIntervals = new Map<string, any>();
+const bootNotificationIntervals = new Map<string, any>();
 
 export function connectWs(
   id: string,
@@ -110,6 +117,51 @@ export function connectWs(
             meter.tick().catch(() => {});
           }, Math.max(1, ocppConfig.MeterValueSampleInterval || 5) * 1000);
           meterIntervals.set(id, handle);
+
+          const prevHeartbeat = heartbeatIntervals.get(id);
+          if (prevHeartbeat) clearInterval(prevHeartbeat);
+          const heartbeatInterval = Math.max(
+            10,
+            ocppConfig.HeartbeatInterval || 60
+          );
+          const heartbeatHandle = setInterval(() => {
+            try {
+              callAction(id, 'Heartbeat', {}).catch(() => {});
+            } catch {}
+          }, heartbeatInterval * 1000);
+          heartbeatIntervals.set(id, heartbeatHandle);
+
+          const prevBootNotification = bootNotificationIntervals.get(id);
+          if (prevBootNotification) clearInterval(prevBootNotification);
+          const bootNotificationInterval = Math.max(
+            30,
+            ocppConfig['BootNotification.intervalHint'] || 60
+          );
+          const sendBootNotification = () => {
+            try {
+              const state = store.getState();
+              const cp = state.ocpp.items[id];
+              const storedDeviceSettings = loadDeviceSettings(id);
+              const deviceSettings = normalizeDeviceSettings({
+                deviceName:
+                  storedDeviceSettings?.deviceName ||
+                  cp?.chargePointConfig?.deviceSettings?.deviceName ||
+                  `Simülatör-${id}`,
+                ...(cp?.chargePointConfig?.deviceSettings || {}),
+                ...(storedDeviceSettings || {}),
+              });
+              callAction(id, 'BootNotification', {
+                chargePointVendor: 'EVS-Sim',
+                chargePointModel: deviceSettings.deviceName || 'Browser-CP',
+              }).catch(() => {});
+            } catch {}
+          };
+          sendBootNotification();
+          const bootNotificationHandle = setInterval(
+            sendBootNotification,
+            bootNotificationInterval * 1000
+          );
+          bootNotificationIntervals.set(id, bootNotificationHandle);
         } catch {}
         resolve();
       };
@@ -130,6 +182,16 @@ export function connectWs(
         if (h) {
           clearInterval(h)
           meterIntervals.delete(id)
+        }
+        const hb = heartbeatIntervals.get(id);
+        if (hb) {
+          clearInterval(hb);
+          heartbeatIntervals.delete(id);
+        }
+        const bn = bootNotificationIntervals.get(id);
+        if (bn) {
+          clearInterval(bn);
+          bootNotificationIntervals.delete(id);
         }
       };
 
@@ -321,7 +383,6 @@ export function connectWs(
                   const cp = state.ocpp.items[id];
                   const conn = cp?.runtime?.connectorId ?? 1;
                   const tag = cp?.runtime?.idTag ?? 'DEMO1234';
-                  // Try to take a final tick and read current energy register
                   let meterStop = 0
                   try {
                     const m = getMeterForCp(id)
@@ -341,7 +402,7 @@ export function connectWs(
                   );
                   await callAction(id, 'StatusNotification', {
                     connectorId: conn,
-                    status: 'Available',
+                    status: 'Finishing',
                     errorCode: 'NoError',
                   });
                 },
