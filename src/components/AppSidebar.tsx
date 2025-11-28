@@ -59,79 +59,13 @@ export function AppSidebar() {
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
             >
               <div className='w-full flex items-center'>
-                <img
-                  src='/sharz-logo.svg'
-                  alt='Sharz'
-                  className='h-fit w-full inline-block ml-0'
-                />
+               <span className='text-2xl font-bold'>OCPP Simulator</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menüler</SidebarGroupLabel>
-          <SidebarMenu>
-            {data.navMain.map((item) => {
-              const active = isActive(item.url);
-
-              return (
-                <Collapsible
-                  key={item.title}
-                  asChild
-                  defaultOpen={active}
-                  className='group/collapsible'
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={active}
-                        className='cursor-pointer'
-                        onClick={() => !item.items && navigate(item.url)}
-                      >
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        {item.items && (
-                          <ChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                        )}
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    {item.items && (
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.items.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={location.pathname === subItem.url}
-                              >
-                                <Button
-                                  onClick={() => navigate(subItem.url)}
-                                  className='cursor-pointer'
-                                  variant='ghost'
-                                >
-                                  <span className='text-sm'>
-                                    {subItem.title}
-                                  </span>
-                                </Button>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    )}
-                  </SidebarMenuItem>
-                </Collapsible>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent> */}
-
-      {/* Connections List */}
       <SidebarContent>
         <div className='flex items-center justify-between px-2'>
           <SidebarGroupLabel>Connections</SidebarGroupLabel>
