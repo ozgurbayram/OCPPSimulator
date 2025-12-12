@@ -16,8 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { normalizeDeviceSettings } from '@/constants/chargePointDefaults';
 import type { DeviceSettings } from '@/types/ocpp';
+import { 
+  Info, 
+  Gauge, 
+  Plug, 
+  Settings
+} from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -71,8 +78,15 @@ export function DeviceSettingsForm({
     <form onSubmit={handleSubmit} className='space-y-6'>
       <Card>
         <CardHeader>
-          <CardTitle>Basic Device Information</CardTitle>
-          <CardDescription>Configure basic device properties</CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Info className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Basic Device Information</CardTitle>
+              <CardDescription>Configure basic device properties</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-2 gap-4'>
@@ -123,10 +137,17 @@ export function DeviceSettingsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Electrical Specifications</CardTitle>
-          <CardDescription>
-            Configure power and electrical parameters
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Gauge className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Electrical Specifications</CardTitle>
+              <CardDescription>
+                Configure power and electrical parameters
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-3 gap-4'>
@@ -230,10 +251,17 @@ export function DeviceSettingsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Connector Configuration</CardTitle>
-          <CardDescription>
-            Configure individual connector settings
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Plug className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Connector Configuration</CardTitle>
+              <CardDescription>
+                Configure individual connector settings
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-3 gap-4 items-center'>
@@ -276,10 +304,17 @@ export function DeviceSettingsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Features & Settings</CardTitle>
-          <CardDescription>
-            Configure additional device features
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Settings className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Features & Settings</CardTitle>
+              <CardDescription>
+                Configure additional device features
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-2 gap-4'>
@@ -334,11 +369,14 @@ export function DeviceSettingsForm({
         </CardContent>
       </Card>
 
-      <div className='flex justify-end space-x-2'>
+      <Separator />
+      <div className='flex justify-end gap-3 pt-4'>
         <Button type='button' variant='outline' onClick={onCancel}>
           Cancel
         </Button>
-        <Button type='submit'>Save Device Settings</Button>
+        <Button type='submit' className="min-w-[140px]">
+          Save Device Settings
+        </Button>
       </div>
     </form>
   );

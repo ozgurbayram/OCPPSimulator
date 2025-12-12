@@ -167,58 +167,83 @@ export default function ChargePointConnection() {
                 <span className='capitalize'>{cp.status}</span>
               </div>
             </div>
-            <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={() => setConfigOpen(true)}
-                className='flex-1 sm:flex-initial text-xs sm:text-sm'
-              >
-                <span className='hidden sm:inline'>Basic Config</span>
-                <span className='sm:hidden'>Basic</span>
-              </Button>
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={() => setAdvancedConfigOpen(true)}
-                className='flex-1 sm:flex-initial text-xs sm:text-sm'
-              >
-                <span className='hidden sm:inline'>Advanced Config</span>
-                <span className='sm:hidden'>Advanced</span>
-              </Button>
-              <Button
-                size='sm'
-                variant='destructive'
-                onClick={() => setDeleteOpen(true)}
-                className='flex-1 sm:flex-initial text-xs sm:text-sm'
-              >
-                Delete
-              </Button>
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={() => connect.mutate({})}
-                disabled={cp.status !== 'disconnected' || connect.isPending}
-                className='flex-1 sm:flex-initial text-xs sm:text-sm'
-              >
-                {connect.isPending || cp.status === 'connecting' ? (
-                  <span className='hidden sm:inline'>Connecting...</span>
-                ) : (
-                  <>
-                    <span className='hidden sm:inline'>Connect</span>
-                    <span className='sm:hidden'>Connect</span>
-                  </>
-                )}
-              </Button>
-              <Button
-                size='sm'
-                variant='ghost'
-                onClick={() => disconnect.mutate()}
-                disabled={cp.status === 'disconnected' || disconnect.isPending}
-                className='flex-1 sm:flex-initial text-xs sm:text-sm'
-              >
-                Disconnect
-              </Button>
+            <div className='flex items-center gap-2 sm:shrink-0'>
+              <div className='hidden sm:flex items-center gap-2'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setConfigOpen(true)}
+                  className='text-xs sm:text-sm'
+                >
+                  Basic Config
+                </Button>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setAdvancedConfigOpen(true)}
+                  className='text-xs sm:text-sm'
+                >
+                  Advanced Config
+                </Button>
+                <Button
+                  size='sm'
+                  variant='destructive'
+                  onClick={() => setDeleteOpen(true)}
+                  className='text-xs sm:text-sm'
+                >
+                  Delete
+                </Button>
+              </div>
+              <div className='flex items-center gap-2 sm:border-l sm:pl-2'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => connect.mutate({})}
+                  disabled={cp.status !== 'disconnected' || connect.isPending}
+                  className='text-xs sm:text-sm'
+                >
+                  {connect.isPending || cp.status === 'connecting' ? (
+                    'Connecting...'
+                  ) : (
+                    'Connect'
+                  )}
+                </Button>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  onClick={() => disconnect.mutate()}
+                  disabled={cp.status === 'disconnected' || disconnect.isPending}
+                  className='text-xs sm:text-sm'
+                >
+                  Disconnect
+                </Button>
+              </div>
+              <div className='flex sm:hidden items-center gap-2'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setConfigOpen(true)}
+                  className='text-xs'
+                >
+                  Basic
+                </Button>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setAdvancedConfigOpen(true)}
+                  className='text-xs'
+                >
+                  Advanced
+                </Button>
+                <Button
+                  size='sm'
+                  variant='destructive'
+                  onClick={() => setDeleteOpen(true)}
+                  className='text-xs'
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
 

@@ -1,12 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { useOcppConnection } from '@/features/ocpp/hooks';
 import type { ChargePoint } from '@/features/ocpp/ocppSlice';
 import { setConnectorId, setTransactionId } from '@/features/ocpp/ocppSlice';
 import { useBatteryState } from '@/hooks/useBatteryState';
 import { getMeterForCp } from '@/services/meterModel';
-import { Plug } from 'lucide-react';
+import { Plug, Power, Activity, Lock } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
@@ -176,86 +177,116 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className='grid gap-4'>
-        <div className='flex items-center justify-between rounded border px-3 py-2 text-sm flex-wrap gap-2'>
-          <span className='font-medium'>Connector 1</span>
-          <span className='text-muted-foreground text-xs sm:text-sm break-words'>
+      <CardContent className='space-y-6'>
+        <div className='flex items-center justify-between rounded-lg border bg-muted/30 px-4 py-3'>
+          <span className='font-medium text-sm'>Connector 1</span>
+          <span className='text-muted-foreground text-xs sm:text-sm'>
             {deviceSettings?.socketType?.[0] || 'Type2'} ({deviceSettings?.acdc || 'AC'})
           </span>
         </div>
 
-        <div className='flex flex-wrap gap-2'>
-          <Button 
-            size='sm' 
-            onClick={onBoot} 
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            BootNotification
-          </Button>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={onHeartbeat}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            Heartbeat
-          </Button>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={onStatus}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            Status
-          </Button>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={onAuthorize}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            Authorize
-          </Button>
-          <Button
-            size='sm'
-            variant='secondary'
-            onClick={onStartTx}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            StartTx
-          </Button>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={onMeterValues}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            MeterValues
-          </Button>
-          <Button
-            size='sm'
-            variant='destructive'
-            onClick={onStopTx}
-            disabled={!connected || !cp.runtime?.transactionId}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            StopTx
-          </Button>
-          <Button
-            size='sm'
-            variant='secondary'
-            onClick={onUnlockCable}
-            disabled={!connected}
-            className='text-xs sm:text-sm flex-1 sm:flex-initial min-w-[120px] sm:min-w-0'
-          >
-            Unlock Cable
-          </Button>
+        <div className='space-y-4'>
+          <div className='space-y-2.5'>
+            <div className='flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+              <Activity className='h-3.5 w-3.5' />
+              Connection & Status
+            </div>
+            <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2'>
+              <Button 
+                size='sm' 
+                onClick={onBoot} 
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                BootNotification
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={onHeartbeat}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                Heartbeat
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={onStatus}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                Status
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={onAuthorize}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                Authorize
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className='space-y-2.5'>
+            <div className='flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+              <Power className='h-3.5 w-3.5' />
+              Transaction
+            </div>
+            <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+              <Button
+                size='sm'
+                variant='secondary'
+                onClick={onStartTx}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                StartTx
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={onMeterValues}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                MeterValues
+              </Button>
+              <Button
+                size='sm'
+                variant='destructive'
+                onClick={onStopTx}
+                disabled={!connected || !cp.runtime?.transactionId}
+                className='h-9 text-xs sm:text-sm'
+              >
+                StopTx
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className='space-y-2.5'>
+            <div className='flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+              <Lock className='h-3.5 w-3.5' />
+              Connector Control
+            </div>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md'>
+              <Button
+                size='sm'
+                variant='secondary'
+                onClick={onUnlockCable}
+                disabled={!connected}
+                className='h-9 text-xs sm:text-sm'
+              >
+                Unlock Cable
+              </Button>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

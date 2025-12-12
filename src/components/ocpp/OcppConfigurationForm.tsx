@@ -9,7 +9,19 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import type { OcppConfiguration } from '@/types/ocpp';
+import { 
+  Wifi, 
+  Gauge, 
+  CreditCard, 
+  Shield, 
+  Settings, 
+  Monitor,
+  Plug,
+  Plus,
+  X
+} from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
 interface OcppConfigurationFormProps {
@@ -50,10 +62,17 @@ export function OcppConfigurationForm({
     <form onSubmit={handleSubmit} className='space-y-6'>
       <Card>
         <CardHeader>
-          <CardTitle>Connection & Heartbeat</CardTitle>
-          <CardDescription>
-            Configure connection timing and heartbeat settings
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Wifi className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Connection & Heartbeat</CardTitle>
+              <CardDescription>
+                Configure connection timing and heartbeat settings
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-3 gap-4'>
@@ -111,10 +130,17 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Meter Values</CardTitle>
-          <CardDescription>
-            Configure meter value sampling and reporting
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Gauge className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Meter Values</CardTitle>
+              <CardDescription>
+                Configure meter value sampling and reporting
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-2 gap-4'>
@@ -176,10 +202,17 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Transaction Settings</CardTitle>
-          <CardDescription>
-            Configure transaction behavior and stop conditions
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <CreditCard className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Transaction Settings</CardTitle>
+              <CardDescription>
+                Configure transaction behavior and stop conditions
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-3 gap-4'>
@@ -282,10 +315,17 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Authorization Settings</CardTitle>
-          <CardDescription>
-            Configure authorization and authentication behavior
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Shield className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Authorization Settings</CardTitle>
+              <CardDescription>
+                Configure authorization and authentication behavior
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-2 gap-4'>
@@ -374,10 +414,17 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>System Configuration</CardTitle>
-          <CardDescription>
-            Configure system behavior and capabilities
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Settings className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>System Configuration</CardTitle>
+              <CardDescription>
+                Configure system behavior and capabilities
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-3 gap-4'>
@@ -506,8 +553,15 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Display & LED Settings</CardTitle>
-          <CardDescription>Configure display and LED behavior</CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Monitor className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Display & LED Settings</CardTitle>
+              <CardDescription>Configure display and LED behavior</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-2 gap-4'>
@@ -545,10 +599,17 @@ export function OcppConfigurationForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>Connector Availability & ID Tags</CardTitle>
-          <CardDescription>
-            Configure connector availability and authorized ID tags
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Plug className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Connector Availability & ID Tags</CardTitle>
+              <CardDescription>
+                Configure connector availability and authorized ID tags
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-2'>
@@ -573,27 +634,38 @@ export function OcppConfigurationForm({
                 variant='outline'
                 size='sm'
                 onClick={() => appendWhitelist('')}
+                className="gap-2"
               >
+                <Plus className="h-3.5 w-3.5" />
                 Add Tag
               </Button>
             </div>
-            {whitelistFields.map((field, index) => (
-              <div key={field.id} className='flex items-center space-x-2'>
-                <Input
-                  {...form.register(`IdTagWhitelist.${index}` as const)}
-                  placeholder='04A1B23C'
-                  className='flex-1'
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => removeWhitelist(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
+            <div className="space-y-2">
+              {whitelistFields.map((field, index) => (
+                <div key={field.id} className='flex items-center gap-2'>
+                  <Input
+                    {...form.register(`IdTagWhitelist.${index}` as const)}
+                    placeholder='04A1B23C'
+                    className='flex-1'
+                  />
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => removeWhitelist(index)}
+                    className="gap-2"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              {whitelistFields.length === 0 && (
+                <p className="text-xs text-muted-foreground py-2">
+                  No authorized ID tags. Click "Add Tag" to add one.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className='flex items-center space-x-2'>
@@ -611,11 +683,14 @@ export function OcppConfigurationForm({
         </CardContent>
       </Card>
 
-      <div className='flex justify-end space-x-2'>
+      <Separator />
+      <div className='flex justify-end gap-3 pt-4'>
         <Button type='button' variant='outline' onClick={onCancel}>
           Cancel
         </Button>
-        <Button type='submit'>Save OCPP Configuration</Button>
+        <Button type='submit' className="min-w-[180px]">
+          Save OCPP Configuration
+        </Button>
       </div>
     </form>
   );

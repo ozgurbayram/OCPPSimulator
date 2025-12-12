@@ -27,6 +27,14 @@ This protocol allows:
 
 This simulator implements **OCPP 1.6** and allows you to test your CSMS by simulating one or multiple charge points, sending OCPP messages, and monitoring the communication flow.
 
+## UI Overview
+
+The application features a modern, intuitive interface for managing charge points and monitoring OCPP communication:
+
+![Connection Page](./public/connection.png)
+
+*Charge Point Connection Interface - View real-time charging status, control OCPP messages, and manage connections*
+
 ## Getting Started
 
 ### Prerequisites
@@ -137,6 +145,10 @@ All values update automatically as MeterValues are received.
 
 The **Network Traffic** panel shows all OCPP messages exchanged between the charge point and CSMS:
 
+![Network Traffic Monitoring](./public/network.png)
+
+*Real-time OCPP message monitoring with detailed JSON payload inspection*
+
 - **Incoming messages** (from CSMS): Displayed with incoming indicators
 - **Outgoing messages** (to CSMS): Displayed with outgoing indicators
 - **Message details**: Click on any message to view its full JSON payload
@@ -159,6 +171,11 @@ Click **"Basic Config"** to edit:
 ### Advanced Configuration
 
 Click **"Advanced Config"** to configure:
+
+![Advanced Configuration](./public/config.png)
+
+*Comprehensive configuration interface with modular sections for device settings and OCPP parameters*
+
 - **Device Settings**: Device name, power limits, voltage, current, connector types, AC/DC mode
 - **OCPP Configuration**: Heartbeat interval, meter value intervals, feature profiles, authorization settings, and more
 
