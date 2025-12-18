@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Battery, Clock, Gauge, Zap, TrendingUp } from 'lucide-react';
+import type { Connector } from '@/types/ocpp';
 
 interface MeterValue {
   timestamp: string;
