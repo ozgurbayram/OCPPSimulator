@@ -257,7 +257,9 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
                 size='sm'
                 variant='secondary'
                 onClick={onStartTx}
-                disabled={!connected}
+                disabled={
+                  !connected || !!cp.runtime?.connectors?.find(c => c.id === connectorId)?.transactionId
+                }
                 className='h-9 text-xs sm:text-sm'
               >
                 StartTx
@@ -275,7 +277,9 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
                 size='sm'
                 variant='destructive'
                 onClick={onStopTx}
-                disabled={!connected || !cp.runtime?.connectors?.some(c => c.transactionId)}
+                disabled={
+                  !connected || !cp.runtime?.connectors?.find(c => c.id === connectorId)?.transactionId
+                }
                 className='h-9 text-xs sm:text-sm'
               >
                 StopTx
