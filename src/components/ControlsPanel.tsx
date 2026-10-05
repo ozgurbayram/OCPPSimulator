@@ -8,6 +8,7 @@ import { useOcppConnection } from '@/features/ocpp/hooks';
 import type { ChargePoint } from '@/features/ocpp/ocppSlice';
 import { setTransactionId, updateConnector, updateConnectorStatus } from '@/features/ocpp/ocppSlice';
 import { useBatteryState } from '@/hooks/useBatteryState';
+import { trackChargingStarted, trackChargingStopped, trackFault, trackOcppAction } from '@/lib/analytics';
 import { getMeterForCp } from '@/services/meterModel';
 import { Plug, Power, Activity, Lock, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ interface ControlsPanelProps {
     connectors?: number;
     socketType?: string[];
     deviceName?: string;
+    batteryStartPercent?: number;
   };
 }
 
@@ -54,6 +56,7 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
   const activeConnector = cp.runtime?.connectors?.find(c => c.id === connectorId);
   const hasActiveFault = activeConnector?.status === 'Faulted' && !!activeConnector.activeFaultCode;
   const activeFaultDefinition = faultCatalogue.find((fault) => fault.errorCode === activeConnector?.activeFaultCode);
+  const selectedFaultDefinition = faultCatalogue.find((fault) => fault.errorCode === selectedFaultCode);
   const sameFaultAlreadyActive = hasActiveFault && activeConnector?.activeFaultCode === selectedFaultCode;
 
   const onBoot = () => {
@@ -64,11 +67,17 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         chargePointVendor: v.vendor || 'EVS-Sim',
         chargePointModel: v.model || 'Browser-CP',
       },
+    }, {
+      onSuccess: () => trackOcppAction('BootNotification', 'success'),
+      onError: () => trackOcppAction('BootNotification', 'failure'),
     });
   };
 
   const onHeartbeat = () => {
-    call.mutate({ action: 'Heartbeat', payload: {} });
+    call.mutate({ action: 'Heartbeat', payload: {} }, {
+      onSuccess: () => trackOcppAction('Heartbeat', 'success'),
+      onError: () => trackOcppAction('Heartbeat', 'failure'),
+    });
   };
 
   const onStatus = () => {
@@ -79,6 +88,9 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         status: 'Available',
         errorCode: 'NoError',
       },
+    }, {
+      onSuccess: () => trackOcppAction('StatusNotification', 'success', connectorId),
+      onError: () => trackOcppAction('StatusNotification', 'failure', connectorId),
     });
     dispatch(updateConnectorStatus({ id: cp.id, connectorId, status: 'Available' }));
   };
@@ -87,6 +99,9 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
     call.mutate({
       action: 'Authorize',
       payload: { idTag: cp.runtime?.connectors?.find(c => c.id === connectorId)?.idTag || 'DEMO1234' },
+    }, {
+      onSuccess: () => trackOcppAction('Authorize', 'success', connectorId),
+      onError: () => trackOcppAction('Authorize', 'failure', connectorId),
     });
   };
 
@@ -112,6 +127,13 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         ? (res as any).transactionId
         : Math.floor(Math.random() * 100000);
     dispatch(setTransactionId({ id: cp.id, connectorId, transactionId: txid }));
+    trackChargingStarted({
+      sessionKey: `${cp.id}:${connectorId}`,
+      protocol: cp.config.protocol,
+      connectorId,
+      meterStartWh: meterStart,
+      startSocPercent: deviceSettings?.batteryStartPercent,
+    });
     await call.mutateAsync({
       action: 'StatusNotification',
       payload: {
@@ -136,11 +158,13 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
   const onStopTx = async () => {
     const tx = cp.runtime?.connectors?.find(c => c.id === connectorId)?.transactionId || 0;
     let meterStop = 0;
+    let endSocPercent: number | undefined;
     try {
       const m = getMeterForCp(cp.id);
       await m?.tick();
       const st = m?.getState(connectorId);
       meterStop = Math.floor(Math.max(0, Number(st?.energyWh || 0)));
+      endSocPercent = typeof st?.socPct === 'number' ? st.socPct : undefined;
     } catch {}
     await call.mutateAsync({
       action: 'StopTransaction',
@@ -153,6 +177,14 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
       },
     });
     dispatch(setTransactionId({ id: cp.id, connectorId, transactionId: undefined }));
+    trackChargingStopped({
+      sessionKey: `${cp.id}:${connectorId}`,
+      protocol: cp.config.protocol,
+      connectorId,
+      meterStopWh: meterStop,
+      endSocPercent,
+      reason: 'local',
+    });
     await call.mutateAsync({
       action: 'StatusNotification',
       payload: {
@@ -174,6 +206,7 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         errorCode: 'NoError',
       },
     });
+    trackOcppAction('UnlockConnector', 'success', connectorId);
   };
 
   const onSimulateFault = async () => {
@@ -203,6 +236,7 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         timestamp: new Date().toISOString(),
       },
     });
+    trackFault('simulated', connectorId, selectedFaultCode, selectedFaultDefinition?.category);
   };
 
   const onClearFault = async () => {
@@ -231,6 +265,7 @@ export const ControlsPanel = ({ cp, deviceSettings }: ControlsPanelProps) => {
         timestamp: new Date().toISOString(),
       },
     });
+    trackFault('cleared', connectorId, activeConnector.activeFaultCode, activeFaultDefinition?.category);
   };
 
   return (

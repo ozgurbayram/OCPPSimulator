@@ -1,4 +1,4 @@
-import { Analytics } from "@vercel/analytics/next";
+import { AnalyticsTracker } from './components/AnalyticsTracker';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { SEO } from './components/SEO';
 import ChargePointConnection from './pages/ChargePointConnection';
@@ -8,7 +8,7 @@ const App = () => {
   return (
     <HashRouter>
       <SEO />
-      <Analytics />
+      <AnalyticsTracker />
       <Routes>
         <Route path='/' element={<Dashboard />} />
         <Route path='/cp/:id' element={<ChargePointConnection />} />

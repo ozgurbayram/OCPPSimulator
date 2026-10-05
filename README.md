@@ -264,3 +264,7 @@ yarn preview
 yarn lint
 ```
 
+
+## Analytics
+
+The official GitHub Pages deployment supports Google Analytics 4. Analytics starts automatically when a measurement ID is configured and stays disabled on localhost or other hosts. See [setup and privacy details](docs/analytics.md).

@@ -35,6 +35,7 @@ jobs:
         run: yarn build
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

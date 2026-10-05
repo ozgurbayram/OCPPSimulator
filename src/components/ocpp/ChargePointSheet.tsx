@@ -1,3 +1,4 @@
+import { trackChargePointCreated } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -58,6 +59,7 @@ export function ChargePointSheet({ open, onOpenChange }: Props) {
       })
     );
     const id: string = action.payload.id;
+    trackChargePointCreated('ocpp1.6', action.payload.runtime?.connectors?.length || 1);
     // Auto-connect immediately after creation (minimal UX)
     try {
       const url = buildUrl(values.csmsUrl.trim(), values.cpId.trim());
