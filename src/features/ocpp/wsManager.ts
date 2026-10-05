@@ -12,11 +12,12 @@ import {
   parseOCPPFrame,
   uuidv4,
 } from '../../utils/ocpp';
-import { setTransactionId } from './ocppSlice';
+import { setTransactionId, updateOcppConfiguration } from './ocppSlice';
 import {
   loadDeviceSettings,
   loadOcppConfiguration,
   saveFrames,
+  saveOcppConfiguration,
   type Frame as PersistedFrame,
 } from './storage';
 
@@ -36,6 +37,145 @@ const clients = new Map<string, Client>();
 const meterIntervals = new Map<string, any>();
 const heartbeatIntervals = new Map<string, any>();
 const bootNotificationIntervals = new Map<string, any>();
+
+function getLiveOcppConfig(id: string) {
+  const state = store.getState();
+  const cp = state.ocpp.items[id];
+  return normalizeOcppConfiguration({
+    ...(cp?.chargePointConfig?.ocppConfig || {}),
+    ...(loadOcppConfiguration(id) || {}),
+  });
+}
+
+function refreshHeartbeatTimer(id: string) {
+  const prevHeartbeat = heartbeatIntervals.get(id);
+  if (prevHeartbeat) clearInterval(prevHeartbeat);
+  const ocppConfig = getLiveOcppConfig(id);
+  const heartbeatInterval = Math.max(10, Number(ocppConfig.HeartbeatInterval) || 60);
+  const heartbeatHandle = setInterval(() => {
+    try {
+      callAction(id, 'Heartbeat', {}).catch(() => {});
+    } catch {}
+  }, heartbeatInterval * 1000);
+  heartbeatIntervals.set(id, heartbeatHandle);
+}
+
+export function applyOcppConfigChange(
+  id: string,
+  key: string,
+  value: string
+): 'Accepted' | 'Rejected' | 'NotSupported' {
+  const state = store.getState();
+  const cp = state.ocpp.items[id];
+  if (!cp?.chargePointConfig) {
+    return 'Rejected';
+  }
+
+  const readonlyKeys = new Set([
+    'NumberOfConnectors',
+    'GetConfigurationMaxKeys',
+    'SupportedFeatureProfiles',
+    'WsSecure',
+    'FirmwareVersion',
+    'ChargeProfileEnabled',
+    'ReservationEnabled',
+  ]);
+
+  if (readonlyKeys.has(key)) {
+    return 'Rejected';
+  }
+
+  const allowedKeys = new Set([
+    'HeartbeatInterval',
+    'ConnectionTimeOut',
+    'MeterValueSampleInterval',
+    'ClockAlignedDataInterval',
+    'MeterValuesSampledData',
+    'MeterValuesAlignedData',
+    'StopTxnSampledData',
+    'StopTxnAlignedData',
+    'AuthorizeRemoteTxRequests',
+    'LocalAuthorizeOffline',
+    'LocalPreAuthorize',
+    'AuthorizationCacheEnabled',
+    'AllowOfflineTxForUnknownId',
+    'StopTransactionOnEVSideDisconnect',
+    'StopTransactionOnInvalidId',
+    'MaxEnergyOnInvalidId',
+    'MinimumStatusDuration',
+    'TransactionMessageAttempts',
+    'TransactionMessageRetryInterval',
+    'UnlockConnectorOnEVSideDisconnect',
+    'BlinkRepeat',
+    'LightIntensity',
+    'ConnectorPhaseRotation',
+    'BootNotification.intervalHint',
+    'Availability',
+  ]);
+
+  if (!allowedKeys.has(key)) {
+    return 'NotSupported';
+  }
+
+  const parsedValue = (() => {
+    const numericKeys = new Set([
+      'HeartbeatInterval',
+      'ConnectionTimeOut',
+      'MeterValueSampleInterval',
+      'ClockAlignedDataInterval',
+      'MaxEnergyOnInvalidId',
+      'MinimumStatusDuration',
+      'TransactionMessageAttempts',
+      'TransactionMessageRetryInterval',
+      'BlinkRepeat',
+      'LightIntensity',
+      'BootNotification.intervalHint',
+    ]);
+    const boolKeys = new Set([
+      'AuthorizeRemoteTxRequests',
+      'LocalAuthorizeOffline',
+      'LocalPreAuthorize',
+      'AuthorizationCacheEnabled',
+      'AllowOfflineTxForUnknownId',
+      'StopTransactionOnEVSideDisconnect',
+      'StopTransactionOnInvalidId',
+      'UnlockConnectorOnEVSideDisconnect',
+    ]);
+
+    if (numericKeys.has(key)) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : null;
+    }
+    if (boolKeys.has(key)) {
+      const lower = value.toLowerCase();
+      if (lower === 'true' || lower === 'false') return lower === 'true';
+      return null;
+    }
+    return value;
+  })();
+
+  if (parsedValue === null) {
+    return 'Rejected';
+  }
+
+  const nextConfig = normalizeOcppConfiguration({
+    ...cp.chargePointConfig.ocppConfig,
+    [key]: parsedValue,
+  });
+
+  store.dispatch(updateOcppConfiguration({ id, ocppConfig: nextConfig }));
+  saveOcppConfiguration(id, nextConfig);
+  refreshHeartbeatTimer(id);
+
+  const current = store.getState().ocpp.items[id]?.chargePointConfig?.ocppConfig;
+  if (!current || current.HeartbeatInterval !== nextConfig.HeartbeatInterval) {
+    if (key === 'HeartbeatInterval') {
+      return 'Rejected';
+    }
+  }
+
+  return 'Accepted';
+}
 
 export function connectWs(
   id: string,
@@ -121,18 +261,7 @@ export function connectWs(
           }, Math.max(1, ocppConfig.MeterValueSampleInterval || 5) * 1000);
           meterIntervals.set(id, handle);
 
-          const prevHeartbeat = heartbeatIntervals.get(id);
-          if (prevHeartbeat) clearInterval(prevHeartbeat);
-          const heartbeatInterval = Math.max(
-            10,
-            ocppConfig.HeartbeatInterval || 60
-          );
-          const heartbeatHandle = setInterval(() => {
-            try {
-              callAction(id, 'Heartbeat', {}).catch(() => {});
-            } catch {}
-          }, heartbeatInterval * 1000);
-          heartbeatIntervals.set(id, heartbeatHandle);
+          refreshHeartbeatTimer(id);
 
           const prevBootNotification = bootNotificationIntervals.get(id);
           if (prevBootNotification) clearInterval(prevBootNotification);
@@ -338,6 +467,7 @@ export function connectWs(
                     unknownKey: keys?.length ? keys.filter((k: string) => !allConfig.some(c => c.key === k)) : [],
                   };
                 },
+                changeConfig: (key: string, value: string) => applyOcppConfigChange(id, key, value),
                 getMeterValuesMeasurands: () => {
                   const state = store.getState();
                   const cp = state.ocpp.items[id];
